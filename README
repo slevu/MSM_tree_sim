@@ -1,0 +1,13 @@
+Simulates 120 compartment ODE model for London MSM HIV epidemic. Population categorized by 
+age (4 quantiles, based on avail data)
+X care continuum (undiagnosed, diagnosed, treated)
+X natural history (5 CD4 stages, based on Cori et al. )
+X risk variation (2 levels of risk behaviour, not correlated with susceptibility)
+
+There is assortativity within age groups. 
+
+Default parameters match incidence from Phillips PLoS One et al. & match cumulative diagnoses reported by PHE for London MSM. 
+
+Also simulates coalescent trees using rcolgem package. Trees are matched to sample times and sample states of available sequence data. 
+
+Many parameters can be tuned to adjust the relative infectiousness by age X care X clinical stage X risk level. 
