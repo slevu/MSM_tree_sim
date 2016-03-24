@@ -2,7 +2,8 @@
 #~ Anne's cd4-staging (5 stages) X 4 age groups  X 2 levels of risk behaviour X (Undiagnosed,Diagnosed,Treated)
 #~  = 120 compartments
 
-require(rcolgem)
+#~ require(rcolgem)
+require(phydynR) # replaces rcolgem
 #~ source('treeSimulatorCpp2.R') # debug 
 require(deSolve)
 require(Rcpp)
@@ -80,7 +81,7 @@ risk_wtransm <- c(
 
 
 ## time axes & funcs
-time_res <- 1e3 
+time_res <-  52 * (2013 - 1979 )  # time steps / week #1e4 #1e3 
 year0 <- 1979
 year1 <- 2013
 date0 <- as.Date('1979-01-01')
@@ -411,7 +412,7 @@ dydt <- function(t,y, parms, ... ){
 		y <- desolve[i,-1]
 		t <- desolve[i, 1]
 		incidence <- inc.t( t, theta )
-		F_matrix( incidence
+		FF <- F_matrix( incidence
 		  , y
 		  , theta
 		  , DEMES
@@ -425,13 +426,15 @@ dydt <- function(t,y, parms, ... ){
 		  , risk_wtransm
 		  , prRecipMat
 		)
+		rownames(FF) = colnames(FF) <- DEMES
+		FF
 	})
 	
 	.G <- lapply( 1:nrow(desolve), function(i){
 		y <- desolve[i,-1]
 		t <- desolve[i, 1]
 		care_rates <- c( diag.t( t, theta), tr.t( t) )
-		G_matrix( y
+		GG <- G_matrix( y
 		  , theta
 		  , DEMES
 		  , NH
@@ -445,6 +448,8 @@ dydt <- function(t,y, parms, ... ){
 		  , age_rates
 		  , care_rates
 		)
+		rownames(GG) = colnames(GG) <- DEMES
+		GG
 	})
 	
 	.Y <- lapply( 1:nrow(desolve), function(i) {
@@ -532,7 +537,7 @@ snazzy.plot <- function( desolve, agg )
 
 
 ## debug: 
-if (T)
+if (F)
 {
 	st.o <- system.time( {
 	#~ o <- ode(y=y0, times=times_day, func=dydt, parms=list()  , method = 'adams')
@@ -562,15 +567,23 @@ if (T)
 			colnames( sampleStates ) <- DEMES
 		}
 		
-		if (T)
+		if (F)
 		{
 			sampleTimes <- scan( file = 'sampleTimes' )
 			ss  <- matrix( scan( file = 'sampleStates' ) , byrow=TRUE, ncol = m)
 			colnames(ss) <- DEMES
 			# regularise
-			ss <- ss + .01
+			ss <- ss + 1e-4
 			ss <- ss / rowSums(ss)
 			sampleStates <- ss
+			st.tree <- system.time( {
+				tree <- sim.co.tree.fgy(tfgy,  sampleTimes, sampleStates
+				  #, res = 1e3 #1e2#1e3
+				  , step_size_multiplier= NA)
+			})
+			
+			#plot(tree , 'phylogram', show.tip.label=F, no.margin=T, edge.width=.1, direction='downwards')
+			plot(tree , 'fan', show.tip.label=F, no.margin=T, edge.width=.1, direction='downwards')
 		}
 		
 		st.tree <- system.time( {

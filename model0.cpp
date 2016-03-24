@@ -30,7 +30,7 @@ NumericMatrix F_matrix( double incidence
 		risk = RISK(i);
 		nh = NH(i); 
 //~ std::cout << age << " " << care << " " << risk << " " << nh << std::endl; 
-		w(i) = nh_wtransm(nh) * age_wtransm(age) * care_wtransm(care) * risk_wtransm (risk ); 
+		w(i) = sizes(i) * nh_wtransm(nh) * age_wtransm(age) * care_wtransm(care) * risk_wtransm (risk ); 
 	}
 	w = w / sum(w); 
 	NumericVector transm = incidence * w ; 
