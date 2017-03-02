@@ -75,7 +75,7 @@ NumericMatrix G_matrix( NumericVector sizes
 	NumericMatrix G(m,m); //,0.
 	std::fill( G.begin(), G.end(), 0. ) ;
 	int recip; 
-	int age, care, risk, nh; 
+	int age, care, nh; 
 	double treatmentEffectiveness = as<double>(theta["treatmentEffectiveness"]);
 	double srcMigrationRate = as<double>(theta["srcMigrationRate"]);
 	double stageprog_x; 
