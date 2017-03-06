@@ -1,25 +1,33 @@
-#~ simple model for simulating trees and testing source attribution methods
-#~ Anne's cd4-staging (5 stages) X 4 age groups  X 2 levels of risk behaviour X (Undiagnosed,Diagnosed,Treated)
-#~  = 120 compartments
+##---- simple model for simulating ----
+##- transmission in MSM 
+##- 120 compartments: 
+##    - 5 natural history cd4-staging
+##    - 4 age groups  
+##    - 2 levels of risk behaviour 
+##    - 3 care status (undiagnosed, diagnosed, treated))
+##- phylo trees 
+##- and testing source attribution methods
 
-#~ require(rcolgem)
+##---- libs ----
 require(phydynR) # replaces rcolgem
 require(deSolve)
 require(Rcpp)
 sourceCpp( 'model0.cpp' )
 
 
-## parameters 
+##---- parameters ---- 
+##- Age progression
+##(by quantiles: 18.0, 27.0, 33.0, 40.0, 80.5)
 age_rates <- c(agerate1 = 1/9/365
 	, agerate2 = 1/6/365
 	, agerate3 = 1/7/365
 	, agerate4 = 1/40.5/365
 ) 
 
-stage_prog_yrs <- c( .5, 3.32, 2.7, 5.50, 5.06 ) #cori AIDS
+##- Natural history (from Cori et al. AIDS 2015)
+stage_prog_yrs <- c( .5, 3.32, 2.7, 5.50, 5.06 )
 stageprog_rates <- setNames( 1 / (stage_prog_yrs  * 365 ) 
  , c('gamma1', 'gamma2', 'gamma3', 'gamma4', 'gamma5')  )
-
 
 pstarts <- c( pstartstage1 = 0 #NA
  , pstartstage2 = 0.76
@@ -28,48 +36,48 @@ pstarts <- c( pstartstage1 = 0 #NA
  , pstartstage5 = 0
 )
 
-theta <- c( age_assort_factor = .5
-  , pRiskLevel1 = .8
-  , srcMigrationRate = 1/50/365 #1 / 25 / 365 # per lineage rate of migration to source
+theta <- c( age_assort_factor = .5 # power of age difference
+  , pRiskLevel1 = .8 # proportion in low risk group
+  , srcMigrationRate = 1/50/365 # per lineage rate of migration to source
   , srcGrowthRate = 1 / 3 / 365 # 
   , src0 = 1e3  # initial source size 
-  
-  , inc_scale = 0.09401734 # based on docking (see below) #.03 
-  
-  , max_diag_rate = 0.66227809 # based on docking (see below)  #1/3 # time 2 diag of 3 yrs
+  , inc_scale = 0.09401734 # based on docking (see below)
+  , max_diag_rate = 0.66227809 # based on docking (see below) 
   , diag_rate_85 = 1/10 
-  , accel_diag_rate = 0.03196171 # based on docking (see below ) #1 / 7 # accel of logistic function
+  , accel_diag_rate = 0.03196171 # based on docking (see below ) # accel of logistic function
   , treatmentEffectiveness = .95 # slows stage progression
-  
-	, pstarts
+  , pstarts
 	, age_rates
 	, stageprog_rates
 )
 
 theta_default <- theta 
 
-
+##- transmission by stage
 nh_wtransm <- c( 
 	nh1 = 1
 	,nh2 = .1
 	,nh3 = .1
 	,nh4 = .1
 	,nh5 = .3
-) 
+)
 
+##- transmission by age
 age_wtransm <- c( 
 	age1 = 1
-	,age2 = 1
+	, age2 = 1
 	, age3 = 1
 	, age4 = 1
 )
 
+##- transmission by treatment status (undiag, diag, treated)
 care_wtransm <- c( 
 	care1 = 1
 	, care2 = .5
 	, care3 = .05
 )
 
+##- transmission by risk group
 risk_wtransm <- c( 
 	risk1 = 1
 	, risk2 = 10
@@ -77,7 +85,7 @@ risk_wtransm <- c(
 
 
 ## time axes & funcs
-time_res <-  52 * (2013 - 1979 )  # time steps / week #1e4 #1e3 
+time_res <-  52 * (2013 - 1979 )  # time steps / week
 year0 <- 1979
 year1 <- 2013
 date0 <- as.Date('1979-01-01')
@@ -94,6 +102,7 @@ years2days <- function(y)
 	(times1 - times0) * (y - year0) / (year1 - year0)
 }
 
+## list of compartments
 N_NH_COMPS <- 5
 N_AGE_COMPS <- 4
 N_RISK_COMPS <- 2
@@ -106,18 +115,6 @@ RISK_COMPS <- paste( sep='', 'riskLevel', 1:N_RISK_COMPS )
 CARE_COMPS <- paste(sep='', 'care', 1:N_CARE_COMPS)
 
 COMPS_list <- list( NH_COMPS, AGE_COMPS, CARE_COMPS, RISK_COMPS )
-
-#~ function(i_complist, i_compPosition, deme)
-#~ {
-#~ ##
-#~ 	if (i_compPosition == length(COMPS_list[[i_complist]])){
-#~ 		j_compPosition <- 1
-#~ 		j_complist <- i_complist + 1
-#~ 	} else{
-#~ 		j_compPosition <- j_compPosition + 1
-#~ 	}
-#~ 	return( list( j_complist, j_compPosition, deme ))
-#~ }
 
 NH_COORDS <- list()
 AGE_COORDS <- list()
@@ -171,20 +168,7 @@ for ( x in RISK_COMPS ){
 
 
 
-# age quantiles, age rates
-#~ > print(qs)
-#~       25%  50%  75% 100% 
-#~ 18.0 27.0 33.0 40.0 80.5 
-#~ > for ( i in 2:length(qs) )
-#~ + print( qs[i] - qs[i-1] )
-#~ 25% 
-#~   9 
-#~ 50% 
-#~   6 
-#~ 75% 
-#~   7 
-#~ 100% 
-#~ 40.5 
+
 
 
 
