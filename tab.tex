@@ -1,0 +1,41 @@
+\begin{tabular}{llrl}
+    \hline 	%\toprule								
+	Notation		&	Parameter	&	Value	&	Unit	\\
+	\hline 	%\midrule								
+$	\alpha_1	$	&	Age progression rate in age group 1	&	1/9/365	&	$day^{-1}$	\\
+$	\alpha_2	$	&	Age progression rate in age group 2	&	1/6/365	&	$day^{-1}$	\\
+$	\alpha_3	$	&	Age progression rate in age group 3	&	1/7/365	&	$day^{-1}$	\\
+$	\alpha_4	$	&	Age progression rate in age group 4	&	1/40.5/365	&	$day^{-1}$	\\
+$	\gamma_1	$	&	Stage progression rate in stage 1 (early HIV infection) 	&	1/0.5/365	&	$day^{-1}$	\\
+$	\gamma_2	$	&	Stage progression rate in stage 2 (CD4 < 500 cells/mm3)	&	1/3.32/365	&	$day^{-1}$	\\
+$	\gamma_3	$	&	Stage progression rate in stage 3 (350 < CD4 $\leq$ 500 cells/mm3)	&	1/2.7/365	&	$day^{-1}$	\\
+$	\gamma_4	$	&	Stage progression rate in stage 4 (200 < CD4 $\le$ 350 cells/mm3)	&	1/5.5/365	&	$day^{-1}$	\\
+$	\gamma_5	$	&	Stage progression rate in stage 5 (CD4 $\leq$ 200 cells/mm3)	&	1/5.06/365	&	$day^{-1}$	\\
+$	\pi_1	$	&	Fraction of individuals transitioning from stage 1 to stage 2 	&	0.76	&		\\
+$	\pi_2	$	&	Fraction of individuals transitioning from stage 1 to stage 3	&	0.19	&		\\
+$	\pi_3	$	&	Fraction of individuals transitioning from stage 1 to stage 4	&	0.05	&		\\
+$	\pi_4	$	&	Fraction of individuals transitioning from stage 1 to stage 5	&	0	&		\\
+$	a	$	&	Age assortativity factor	&	0.5	&		\\
+$	p	$	&	Proportion of individuals in low-risk group	&	0.8	&		\\
+$	m	$	&	Per lineage rate of migration to source compartment	&	1/50/365	&	$day^{-1}$	\\
+$	g	$	&	Rate of growth of source compartment	&	1/3/0365	&	$day^{-1}$	\\
+$	s	$	&	Initial size of source compartment	&	1000	&		\\
+$	i	$	&	Incidence scaling factor for London MSM	&	0.03	&		\\
+$	d	$	&	Diagnosis rate prior to 1985	&	1/10	&	$year^{-1}$	\\
+$	\mu_d	$	&	Maximum value of diagnosis rate post 1985 (logistic function)	&	1/3	&	$year^{-1}$	\\
+$	k_d	$	&	Steepness of diagnosis rate post 1985 (logistic function)	&	1/7	&		\\
+$	\mu_t	$	&	Maximum value of treatment rate post 1995 (logistic function)	&	1	&	$year^{-1}$	\\
+$	k_t	$	&	Steepness of treatment rate post 1995 (logistic function)	&	1/2	&		\\
+$	e	$	&	Treatment effectiveness	&	0.95	&		\\
+$	w_{s1}	$	&	Transmission weight for individuals in stage 1	&	1	&		\\
+$	w_{s2}, w_{s3}, w_{s4}	$	&	Transmission weights for individuals in stages 2 to 4	&	0.1	&		\\
+$	w_{s5}	$	&	Transmission weight for individuals in stage 5	&	0.3	&		\\
+$	w_{a1}, w_{a2}, w_{a3}, w_{a4}	$	&	Transmission weights for individuals in age groups 1 to 4	&	1	&		\\
+$	w_{c1}	$	&	Transmission weight for individuals undiagnosed	&	1	&		\\
+$	w_{c2}	$	&	Transmission weight for individuals diagnosed and untreated	&	0.5	&		\\
+$	w_{c3}	$	&	Transmission weight for individuals diagnosed and treated	&	0.05	&		\\
+$	w_{r1}	$	&	Transmission weight for individuals in low risk category	&	1	&		\\
+$	w_{r2}	$	&	Transmission weight for individuals in high risk category	&	10	&		\\
+									
+	\hline  %\bottomrule																																																												
+\end{tabular} 

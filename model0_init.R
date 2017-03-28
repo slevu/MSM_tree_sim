@@ -1,35 +1,25 @@
-##---- simple model for simulating ----
-##- transmission in MSM 
-##- 120 compartments: 
-##    - 5 natural history cd4-staging
-##    - 4 age groups  
-##    - 2 levels of risk behaviour 
-##    - 3 care status (undiagnosed, diagnosed, treated))
-##- phylo trees 
-##- and testing source attribution methods
+#~ simple model for simulating trees and testing source attribution methods
+#~ Anne's cd4-staging (5 stages) X 4 age groups  X 2 levels of risk behaviour X (Undiagnosed,Diagnosed,Treated)
+#~  = 120 compartments
 
-##---- libs ----
+#~ require(rcolgem)
 require(phydynR) # replaces rcolgem
 require(deSolve)
 require(Rcpp)
+sourceCpp( 'model0.cpp' )
 
-##---- source C ----
-sourceCpp( 'model0.cpp' ) # F_matrix and G_matrix fns
 
-##---- Epidemic history ----
-##---- parameters ---- 
-##- Age progression
-##(by quantiles: 18.0, 27.0, 33.0, 40.0, 80.5)
+## parameters 
 age_rates <- c(agerate1 = 1/9/365
 	, agerate2 = 1/6/365
 	, agerate3 = 1/7/365
 	, agerate4 = 1/40.5/365
 ) 
 
-##- Natural history (from Cori et al. AIDS 2015)
-stage_prog_yrs <- c( .5, 3.32, 2.7, 5.50, 5.06 )
+stage_prog_yrs <- c( .5, 3.32, 2.7, 5.50, 5.06 ) #cori AIDS
 stageprog_rates <- setNames( 1 / (stage_prog_yrs  * 365 ) 
  , c('gamma1', 'gamma2', 'gamma3', 'gamma4', 'gamma5')  )
+
 
 pstarts <- c( pstartstage1 = 0 #NA
  , pstartstage2 = 0.76
@@ -38,49 +28,48 @@ pstarts <- c( pstartstage1 = 0 #NA
  , pstartstage5 = 0
 )
 
-theta <- c( age_assort_factor = .5 # power of age difference
-  , pRiskLevel1 = .8 # proportion in low risk group
-  , srcMigrationRate = 1/50/365 # per lineage rate of migration to source
+theta <- c( age_assort_factor = .5
+  , pRiskLevel1 = .8
+  , srcMigrationRate = 1/50/365 #1 / 25 / 365 # per lineage rate of migration to source
   , srcGrowthRate = 1 / 3 / 365 # 
   , src0 = 1e3  # initial source size 
-  , inc_scale = 0.09401734 # based on docking (see below) # initial = .03
-  , max_diag_rate = 0.66227809 # based on docking (see below) # initial = 1/3 (time 2 diag of 3 yrs)
+  
+  , inc_scale = 0.09401734 # based on docking (see below) #.03 
+  
+  , max_diag_rate = 0.66227809 # based on docking (see below)  #1/3 # time 2 diag of 3 yrs
   , diag_rate_85 = 1/10 
-  , accel_diag_rate = 0.03196171 # based on docking (see below ) # initial = 1/7 # accel of logistic function
+  , accel_diag_rate = 0.03196171 # based on docking (see below ) #1 / 7 # accel of logistic function
   , treatmentEffectiveness = .95 # slows stage progression
-  , pstarts
+  
+	, pstarts
 	, age_rates
 	, stageprog_rates
 )
 
 theta_default <- theta 
 
-##---- transmission parameters: baseline ----
-##- transmission by stage
+
 nh_wtransm <- c( 
 	nh1 = 1
 	,nh2 = .1
 	,nh3 = .1
 	,nh4 = .1
 	,nh5 = .3
-)
+) 
 
-##- transmission by age
 age_wtransm <- c( 
 	age1 = 1
-	, age2 = 1
+	,age2 = 1
 	, age3 = 1
 	, age4 = 1
 )
 
-##- transmission by treatment status (undiag, diag, treated)
 care_wtransm <- c( 
 	care1 = 1
 	, care2 = .5
 	, care3 = .05
 )
 
-##- transmission by risk group
 risk_wtransm <- c( 
 	risk1 = 1
 	, risk2 = 10
@@ -88,7 +77,7 @@ risk_wtransm <- c(
 
 
 ## time axes & funcs
-time_res <-  52 * (2013 - 1979 )  # time steps / week
+time_res <-  52 * (2013 - 1979 )  # time steps / week #1e4 #1e3 
 year0 <- 1979
 year1 <- 2013
 date0 <- as.Date('1979-01-01')
@@ -105,7 +94,6 @@ years2days <- function(y)
 	(times1 - times0) * (y - year0) / (year1 - year0)
 }
 
-## list of compartments
 N_NH_COMPS <- 5
 N_AGE_COMPS <- 4
 N_RISK_COMPS <- 2
@@ -118,6 +106,18 @@ RISK_COMPS <- paste( sep='', 'riskLevel', 1:N_RISK_COMPS )
 CARE_COMPS <- paste(sep='', 'care', 1:N_CARE_COMPS)
 
 COMPS_list <- list( NH_COMPS, AGE_COMPS, CARE_COMPS, RISK_COMPS )
+
+#~ function(i_complist, i_compPosition, deme)
+#~ {
+#~ ##
+#~ 	if (i_compPosition == length(COMPS_list[[i_complist]])){
+#~ 		j_compPosition <- 1
+#~ 		j_complist <- i_complist + 1
+#~ 	} else{
+#~ 		j_compPosition <- j_compPosition + 1
+#~ 	}
+#~ 	return( list( j_complist, j_compPosition, deme ))
+#~ }
 
 NH_COORDS <- list()
 AGE_COORDS <- list()
@@ -168,6 +168,28 @@ for ( x in RISK_COMPS ){
 	RISK[ RISK_COORDS[[x]] ] = k -1
 	k <- k + 1
 }
+
+
+
+# age quantiles, age rates
+#~ > print(qs)
+#~       25%  50%  75% 100% 
+#~ 18.0 27.0 33.0 40.0 80.5 
+#~ > for ( i in 2:length(qs) )
+#~ + print( qs[i] - qs[i-1] )
+#~ 25% 
+#~   9 
+#~ 50% 
+#~   6 
+#~ 75% 
+#~   7 
+#~ 100% 
+#~ 40.5 
+
+
+
+
+
 
 ## helpers
 m <- length(DEMES)
@@ -267,7 +289,7 @@ y0[ CARE_COORDS$care1 ] <- 1 / length( CARE_COORDS$care1 )
 y0[m] <- theta['src0'] # initial source size 
 
 
-##---- Docking ----
+
 #~ idea for hacking incidence and diagnosis rates(t)
 #~ phillips incidence estimate -> scale so cuminf has about right value 
 #~ make diagnosis rate linear from zero; tune so that 80pc diagnosed in present
@@ -459,6 +481,216 @@ dydt <- function(t,y, parms, ... ){
 	})
 	
 	list( .t, .F, .G, .Y )
+}
+
+
+
+
+## unit tests
+if (F)
+{
+t <- 1e4 
+	incidence <- inc.t( t, theta )
+	care_rates <- c( diag.t( t, theta), tr.t( t) )
+	
+	FF <- F_matrix( incidence
+	  , rep(1, m )#y0
+	  , as.list(theta)
+	  , DEMES
+	  , NH
+	  , AGE
+	  , CARE
+	  , RISK
+	  , nh_wtransm
+	  , age_wtransm
+	  , care_wtransm
+	  , risk_wtransm
+	  , prRecipMat
+	)
+	rownames(FF) = colnames(FF) <- DEMES 
+}
+
+
+
+if (F)
+{
+	tr <- sapply( times_day, function(t) diag.t( t, theta ) )
+	di <- sapply( times_day, function(t) tr.t( t ) )
+	inc <- sapply( times_day, function(t) inc.t( t , theta ) )
+	X11(); plot( times_year, inc )
+	X11(); plot( times_day, tr )
+	X11(); plot( times_day, di )
+}
+
+if (F)
+{
+t <- 1e4 
+	care_rates <- c( diag.t( t, theta), tr.t( t) )
+	
+	GG <- G_matrix( rep( 1, m ) 
+	  , as.list(theta)
+	  , DEMES
+	  , NH
+	  , AGE
+	  , CARE
+	  , RISK
+	  , STAGEPROG_RECIP
+	  , AGE_RECIP
+	  , CARE_RECIP
+	  , stageprog_rates
+	  , age_rates
+	  , care_rates
+	  , prStageRecipMat
+	)
+	
+	rownames(GG) = colnames(GG) <- DEMES
+	
+	if (F)
+	{
+		# NOTE this test does not work correctly...
+		for (x in rownames(GG)){
+			print(x )
+			print(names( GG[x,which(GG[x,]  > 0)] ) )
+			cat('\n\n\n' )
+		}
+		
+		rowSums(GG)[ rowSums( GG )==0 ]
+		
+		for (k in 1:m){
+			x <- ifelse( STAGEPROG_RECIP[k]>-1,  DEMES[STAGEPROG_RECIP[k]], NA)
+			print( c( DEMES[k],x ) )
+		}
+		
+		x <- AGE_RECIP
+		x[ AGE_RECIP < 0] <- NA
+		cbind( DEMES, DEMES[x] ) 
+		
+		x <- CARE_RECIP
+		x[ CARE_RECIP < 1 ] <- NA
+		cbind( DEMES, DEMES[x] )
+		
+		x <- STAGEPROG_RECIP
+		x[ STAGEPROG_RECIP < 1 ] <- NA
+		cbind( DEMES, DEMES[x] )
+	}
+}
+
+#~ care 3 do not age 
+#~ care 3 do not stage prog
+#~ "stage3.age4.care3.riskLevel2" - no stage prog
+#~ "stage5.age2.care3.riskLevel2" - no age
+#~ > rowSums(GG)[ rowSums( GG )==0 ]
+#~ stage2.age4.care2.riskLevel1 stage2.age4.care2.riskLevel2 
+#~                            0                            0 
+#~ stage2.age4.care3.riskLevel1 stage2.age4.care3.riskLevel2 
+#~                            0                            0 
+#~ stage5.age4.care3.riskLevel1 stage5.age4.care3.riskLevel2 
+#~                            0                            0 
+#~ > 
+
+
+## plots
+snazzy.plot <- function( desolve, agg )
+{
+	oa <- ( sapply( names( agg ), function( n ) {
+		rowSums( desolve[, 1 + agg[[n]] ] )  ## NOTE desolve mat has time as first col
+	}) )
+	X11() 
+	matplot( times_year, oa, type = 'l' )
+	legend( x = 'topleft', legend = names(agg)
+	  , col = 1:length(agg) #SPCOLS[1:length(agg)] 
+	  , pch = 1
+	  )
+}
+
+
+
+## debug: 
+#~ o <- ode(y=y0, times=times_day, func=dydt, parms=list()  , method = 'euler')
+if (F)
+{
+#~ 	dydt( 0, y0, list() )
+	st.o <- system.time( {
+	#~ o <- ode(y=y0, times=times_day, func=dydt, parms=list()  , method = 'adams')
+	o <- ode(y=y0, times=times_day, func=dydt, parms=list()  , method = 'euler')
+	#~ o <- ode(y=y0, times=times_day, func=dydt, parms=list()  , method = 'rk4')
+	})
+	
+	if (F){
+		X11(); snazzy.plot(  o, CARE_COORDS ) 
+		snazzy.plot(  o, AGE_COORDS ) 
+		snazzy.plot(  o, RISK_COORDS ) 
+		snazzy.plot(  o, NH_COORDS ) 
+	}
+	
+	if (T)
+	{
+		tfgy <- .tfgy( o )
+		
+		if (F){
+			n <- 12e3 #1000 #2e2
+			sampleTimes <- seq( years2days( 2004 ), years2days( 2013 ), length.out = n )
+			ss0 <- tfgy[[4]][[1000]]
+			ss0[m] <- 0
+			ss0 <- ss0 / sum(ss0)
+			sampleStates <- matrix( ss0, nrow = n, ncol = m, byrow=T)
+			colnames( sampleStates ) <- DEMES
+		}
+		
+		if (T)
+		{
+			sampleTimes <- scan( file = 'sampleTimes' )
+			ss  <- matrix( scan( file = 'sampleStates' ) , byrow=TRUE, ncol = m)
+			colnames(ss) <- DEMES
+			# regularise
+			ss <- ss + 1e-4
+			ss <- ss / rowSums(ss)
+			sampleStates <- ss
+			st.tree <- system.time( {
+				tree <- sim.co.tree.fgy(tfgy,  sampleTimes, sampleStates
+				  #, res = 1e3 #1e2#1e3
+				  , step_size_multiplier= NA)
+			})
+			
+			#plot(tree , 'phylogram', show.tip.label=F, no.margin=T, edge.width=.1, direction='downwards')
+			plot(tree , 'fan', show.tip.label=F, no.margin=T, edge.width=.1, direction='downwards')
+		}
+		
+		
+		if (F)
+		{
+			plot(tree , 'radial', show.tip.label=F, no.margin=T)
+			plot(tree , 'phylogram', show.tip.label=F, no.margin=T)
+			plot(tree , 'phylogram', show.tip.label=F, no.margin=T, edge.width=.1, direction='downwards')
+			plot(tree , 'radial', show.tip.label=F, no.margin=T, edge.width=.1, direction='downwards')
+		}
+	}
+	
+}
+
+
+## 'dock' model
+if (F)
+{
+	#~ PHE: 15552 diagnosed msm in london in 2012
+	propDiagnosed2012 <- 4/5
+	I2012 <- 15552  / propDiagnosed2012 # assuming 80pc diagnosed
+	#objfun based on both the above stats: 
+	objfun <- function( lntheta0 )
+	{
+		theta[ names(lntheta0) ] <<- exp(lntheta0) # using globals..
+		o <- ode(y=y0, times=times_day, func=dydt, parms=list(), method = 'euler')
+		ifin <- sum( o[nrow(o), 2:(ncol(o)-1) ] )
+		idiagnosed <- sum( o[nrow(o), 1 + c( CARE_COORDS$care2, CARE_COORDS$care3) ] )
+		print(paste( ifin, idiagnosed ))
+		print( theta[fit_names ] )
+		((ifin - I2012) / I2012)^2 + (idiagnosed/ifin - propDiagnosed2012)^2
+	}
+	fit_names <- c('inc_scale', 'max_diag_rate', 'accel_diag_rate')
+	theta_start <- log(theta[fit_names]) # default values
+	o <- optim( theta_start, objfun , control = list(trace=6, maxit=300) )
+	theta_docked <- exp(o$par)
+	print((o))
 }
 
 
