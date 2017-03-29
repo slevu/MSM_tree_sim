@@ -2,6 +2,8 @@
 title: "Run simulated epidemic history"
 author: "Stephane"
 date: "3/27/2017"
+header-includes:
+   - \usepackage{multirow, booktabs, threeparttable}
 output: pdf_document
 ---
 
@@ -16,18 +18,34 @@ library(knitr)
 read_chunk('model0.R')
 ```
 
-load libraries
+Load packages
 ```{r libs, warning=FALSE, message=FALSE}
 ```
-source C functions
+
+Source C functions
 ```{r source C}
 
 ```
 
-input parameters
+Define input parameters
 ```{r parameters}
 ```
 \input{tab.tex}
 
 Note: incidence and diagnosis rate scaling factors are a priori. Now, there are fitted 
 doi:10.1371/journal.pone.0055312.g002 (Fig 2.A)
+
+every individuals start infection at EHI stage
+
+
+prRecipMat:
+  - prob that recipient get infection, conditionning on
+	- prob of being risk level 1 (80%) vs risk level 2 (20%)
+	- EHI stage (only those recipient get infection)
+	- care status (only undiagnosed get infection)
+       	- age assortativity (power of age class difference) 
+  - intervenes in F matrix [ F(i,j) = incidence * w * prRecipMat(i,j), with w = beta_NH * beta_age * beta_care * beta_risk ]
+
+
+prStageRecipMat:
+  - Prob for EHI recipient to jump to next other CD4 stage
