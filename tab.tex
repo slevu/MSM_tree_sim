@@ -10,7 +10,7 @@ $	\alpha_3	$	&	~~Group 3 [33-40)	&	1/7/365 $day^{-1}$	\\
 $	\alpha_4	$	&	~~Group 4 [40-80.5)	&	1/40.5/365 $day^{-1}$	\\
 			&	\emph{Stage progression rate}\tnote{b}	&		\\
 $	\gamma_1	$	&	~~Stage 1 (early HIV infection) 	&	1/0.5/365 $day^{-1}$	\\
-$	\gamma_2	$	&	~~Stage 2 (CD4 < 500 cells/mm3)	&	1/3.32/365 $day^{-1}$	\\
+$	\gamma_2	$	&	~~Stage 2 (CD4 > 500 cells/mm3)	&	1/3.32/365 $day^{-1}$	\\
 $	\gamma_3	$	&	~~Stage 3 (350 < CD4 $\leq$ 500 cells/mm3)	&	1/2.7/365 $day^{-1}$	\\
 $	\gamma_4	$	&	~~Stage 4 (200 < CD4 $\le$ 350 cells/mm3)	&	1/5.5/365 $day^{-1}$	\\
 $	\gamma_5	$	&	~~Stage 5 (CD4 $\leq$ 200 cells/mm3)	&	1/5.06/365 $day^{-1}$	\\
@@ -19,16 +19,16 @@ $	\pi_1	$	&	~~Stage 1 to stage 2 	&	0.76	\\
 $	\pi_2	$	&	~~Stage 1 to stage 3	&	0.19	\\
 $	\pi_3	$	&	~~Stage 1 to stage 4	&	0.05	\\
 $	\pi_4	$	&	~~Stage 1 to stage 5	&	0	\\
-$	a	$	&	Age assortativity factor \tnote{c}	&	0.5	\\
+$	a	$	&	Age assortativity factor	&	0.5	\\
 $	p	$	&	Proportion of individuals in low-risk group	&	0.8	\\
 $	m	$	&	Per lineage rate of migration to source compartment	&	1/50/365 $day^{-1}$	\\
 $	g	$	&	Rate of growth of source compartment	&	1/3/365 $day^{-1}$	\\
 $	s	$	&	Initial size of source compartment	&	1000	\\
-$	i	$	&	Incidence scaling factor for London MSM \tnote{d}	&	0.03	\\
+$	i	$	&	Incidence scaling factor for London MSM \tnote{c}	&	0.03	\\
 			&	\emph{Diagnosis rate}	&		\\
 $	d_{85}	$	&	~~Fixed rate prior to 1985	&	1/10 $year^{-1}$	\\
-$	\mu_d	$	&	~~Maximum value of logistic function after 1985  \tnote{d}	&	1/3 $year^{-1}$	\\
-$	k_d	$	&	~~Steepness of logistic function after 1985  \tnote{d}	&	1/7 $year^{-1}$	\\
+$	\mu_d	$	&	~~Maximum value of logistic function after 1985  \tnote{c}	&	1/3 $year^{-1}$	\\
+$	k_d	$	&	~~Steepness of logistic function after 1985  \tnote{c}	&	1/7 $year^{-1}$	\\
 			&	\emph{Treatment rate}	&		\\
 $	t_{95}	$	&	~~Fixed rate prior to 1995	&	0	\\
 $	\mu_t	$	&	~~Maximum value of logistic function after 1995	&	1	\\
@@ -49,7 +49,7 @@ $	w_{r2}	$	&	~~Risk status 2 (high risk)	&	10	\\
 	\begin{tablenotes}						
 	\item[a] From quartiles of age of MSM diagnosed in London available in UKDRDB						
 	\item[b] From Cori et al. AIDS 2015						
-	\item[c] Arbitrary factor raised to the power of age class difference						
-	\item[d] Initial value later fitted to retrieve observed number of diagnosed cases ...						
+	%\item[c] Arbitrary factor raised to the power of age class difference						
+	\item[c] Initial value later calibrated to retrieve observed number of diagnosed cases from surveillance data						
 	\end{tablenotes}						
 	\end{threeparttable}						
