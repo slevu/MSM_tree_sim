@@ -13,8 +13,6 @@ require(phydynR) # replaces rcolgem
 require(deSolve)
 require(Rcpp)
 
-##---- source C ----
-sourceCpp( 'model0.cpp' ) # F_matrix and G_matrix fns
 
 ##---- Epidemic history ----
 ##---- parameters ---- 
@@ -64,7 +62,6 @@ nh_wtransm <- c(
 	,nh4 = .1
 	,nh5 = .3
 )
-
 ##- transmission by age
 age_wtransm <- c( 
 	age1 = 1
@@ -72,14 +69,12 @@ age_wtransm <- c(
 	, age3 = 1
 	, age4 = 1
 )
-
 ##- transmission by treatment status (undiag, diag, treated)
 care_wtransm <- c( 
 	care1 = 1
 	, care2 = .5
 	, care3 = .05
 )
-
 ##- transmission by risk group
 risk_wtransm <- c( 
 	risk1 = 1
@@ -105,6 +100,7 @@ years2days <- function(y)
 	(times1 - times0) * (y - year0) / (year1 - year0)
 }
 
+##---- define demes ----
 ## list of compartments
 N_NH_COMPS <- 5
 N_AGE_COMPS <- 4
@@ -221,7 +217,7 @@ prStageRecipMat <- prStageRecipMat/rowSums( prStageRecipMat )
 prStageRecipMat[is.na(prStageRecipMat)] <- 0
 
 
-## mig mat
+## mig mat: deme indices of destination for transition in age, care and stage 
 # NOTE uses R indices 
 STAGEPROG_RECIP <- rep(-1, m)
 CARE_RECIP <- rep(-1, m )
@@ -311,7 +307,8 @@ tr.t <- function(t){
 
 
 
-
+##---- source C ----
+sourceCpp( 'model0.cpp' ) # F_matrix and G_matrix fns
 
 
 ## solve model 
