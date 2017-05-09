@@ -1,0 +1,56 @@
+\documentclass{article}
+\usepackage{multirow, booktabs, threeparttable}
+%%\usepackage{lmodern}
+%\usepackage[backend=bibtex]{biblatex}
+%%\bibliographystyle{wileyj}
+%\bibliography{ref1} 
+
+\begin{document}
+
+\title{Run London MSM simulated epidemic history}
+\author{S. Le Vu}
+%\affiliation{DIDE}
+\date{3/27/2017}
+\maketitle
+
+<<external-code, echo=FALSE>>=
+library(knitr)
+read_chunk('model0.R')
+@
+
+\section{Epidemic simulation}
+The goal is to replicate a simple transmission history in a population that is comparable to MSM in London.
+The simulation is based on a system of ordinary differential equations which describe the dynamics of the number of infected hosts in different categories. The model allows to vary how individual characteristics influence transmission to test methods of estimation of transmission risk under different scenarios departing from baseline scenario shown here.
+
+A single epidemic simulation is produced by the R script \texttt{model0.r}.  Here, we read the source code, load necessary packages and execute it chunk by chunk
+
+<<libs, warning=FALSE, message=FALSE>>=
+
+@
+
+\subsection{Define input parameters}
+The epidemic history is modeled with a system of ordinary differential equations determining transmission and transition through 5 infection stages (early HIV infection (EHI) , 3 chronic stages based on CD4 and AIDS), 4 age groups (based on quartiles of observed diagnosed individuals in UKDRDB) and 3 diagnosis states (undiagnosed, diagnosed untreated and diagnosed under treatment). Individuals are further stratified by an arbitrary binary risk characteristic influencing transmission. The population is thus structured in 120 states or demes. In addition, we model importation of infections into London by adding a \emph{source} compartment that represents infected hosts outside of London MSM group. The source compartment is parametrized by its initial size, migration rate and growth rate.
+
+<<parameters>>=
+
+@
+
+\subsection{Transmission parameters}
+Age groups are based on quantiles of observed age distribution of MSM diagnosed with HIV in London \cite{noauthor_hiv_2014} and transmission rates are independent of age. However, in baseline scenario, transmission is allowed to vary according to \emph{weights} provided by risk category, stage of infection, treatment status and according to age assortativity:
+\begin{itemize}
+    \item A proportion of 20\% of the population are deemed to be at high risk with a ten-fold increase in transmission relative to low risk counterparts.
+    \item We let infection stage influence transmission rates with a ten-fold increase in probability of transmission in early HIV infection and a three-fold increase in AIDS stage. Mean time of progressions to CD4 stages ($\gamma_i, i=1,\ldots,5$) and proportion in each CD4 category after seroconversion ($\pi_i,i=1,\ldots,4$) were obtained from Cori et al. \cite{cori_cd4_2015}.  
+    \item Relative to undiagnosed individuals, diagnosed and treated patients have a reduction in transmission by respectively a factor 2 and 20. 
+    \item An age assortativity parameter is introduced in the transmission matrix which causes transmission rates to decrease as a power law function of the difference in age.  
+\end{itemize}
+
+
+<<>>=
+#print(theta)
+@
+
+%\printbibliography  
+\bibliographystyle{plain}
+\bibliography{ref2} 
+\end{document}
+

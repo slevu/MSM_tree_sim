@@ -1,57 +1,126 @@
 ---
-title: "Run simulated epidemic history"
+title: "London MSM simulated epidemic history"
 author: "Stephane"
 date: "3/27/2017"
 header-includes:
    - \usepackage{multirow, booktabs, threeparttable}
 output: pdf_document
+bibliography: ref2.bib
+nocite: | 
+  @cori_cd4_2015
 ---
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+## Epidemic simulation
+The goal is to replicate a simple transmission history in a population that is comparable to MSM in London.
+The simulation is based on a system of ordinary differential equations which describe the dynamics of the number of infected hosts in different categories. The model allows to vary how individual characteristics influence transmission to test methods of estimation of transmission risk under different scenarios departing from baseline scenario shown here.
 
-Read source code and execute chunk by chunk
+A single epidemic simulation is produced by the R script `model0.r`.  Here, we read the source code, load necessary packages and execute it chunk by chunk
 ```{r read}
 library(knitr)
 read_chunk('model0.R')
 ```
 
-Load packages
 ```{r libs, warning=FALSE, message=FALSE}
 ```
 
-Define input parameters
-```{r parameters}
+### Define input parameters
+The epidemic history is modeled with a system of ordinary differential equations determining transmission and transition through 5 infection stages (early HIV infection (EHI) , 3 chronic stages based on CD4 and AIDS), 4 age groups (based on quartiles of observed diagnosed individuals in UKDRDB) and 3 diagnosis states (undiagnosed, diagnosed untreated and diagnosed under treatment). Individuals are further stratified by an arbitrary binary risk characteristic influencing transmission. The population is thus structured in 120 states or demes. In addition, we model importation of infections into London by adding a \emph{source} compartment that represents infected hosts outside of London MSM group. The source compartment is parametrized by its initial size, migration rate and growth rate.
+```{r parameters, include = TRUE}
 ```
 
-```{r transmission parameters: baseline}
+###Transmission parameters
+Age groups are based on quantiles of observed age distribution of MSM diagnosed with HIV in London [@noauthor_hiv_2014] and transmission rates are independent of age. However, in baseline scenario, transmission is allowed to vary according to \emph{weights} provided by risk category, stage of infection, treatment status and according to age assortativity:
+
+- A proportion of 20\% of the population are deemed to be at high risk with a ten-fold increase in transmission relative to low risk counterparts.
+- We let infection stage influence transmission rates with a ten-fold increase in probability of transmission in early HIV infection and a three-fold increase in AIDS stage. Mean time of progressions to CD4 stages ($\gamma_i, i=1,\ldots,5$) and proportion in each CD4 category after seroconversion ($\pi_i,i=1,\ldots,4$) were obtained from Cori et al.  
+- Relative to undiagnosed individuals, diagnosed and treated patients have a reduction in transmission by respectively a factor 2 and 20 . 
+- An age assortativity parameter is introduced in the transmission matrix which causes transmission rates to decrease as a power law function of the difference in age.  
+
+```{r}
+print(theta)
+```
+
+
+```{r transmission parameters: baseline, include = TRUE}
 
 ```
 
-Initial parameter values for baseline scenario
+```{r define demes, include = TRUE}
+
+```
+
+- `prRecipMat` represents the probabilities that a recipient gets infection, conditioning on
+
+    - risk level,
+    - stage (only individuals in EHI stage 'get' infection),
+    - care status (only undiagnosed 'get' infection) and
+    - age assortativity (power of age class difference),
+
+and intervenes in F matrix $F(i,j) = \textrm{incidence} \cdot  w \cdot \textrm{prRecipMat}(i,j)$ , with $w = \beta_\textrm{stage} \cdot \beta_\textrm{age} \cdot \beta_\textrm{care} \cdot \beta_\textrm{risk}$
+
+
+- `prStageRecipMat` represents the probability for a recipient in EHI to jump to next other CD4 stage
+- Natural mortality corresponds to aging out of age 4
+- AIDS mortality corresponds to transitioning out of AIDS stage
+
+
+
+
+
+```{r calibrating function}
+
+```
+
+Individual transmission rates are normalised so that total incidence is based on a previous study [@phillips_increased_2013] assuming that dynamics of new infections in MSM was the same at the country level and in London.  
+Rates of treatment were modelled as zero before 1995 and then increase according to a logistic function with maximum 1 and steepness 0.5.
+
+### Initial parameter values for baseline scenario
 \input{tab.tex}
 
-Note: incidence and diagnosis rate scaling factors are a priori. Now, there are fitted 
-doi:10.1371/journal.pone.0055312.g002 (Fig 2.A)
 
-every individuals start infection at EHI stage
-
-
-prRecipMat:
-  - prob that recipient get infection, conditionning on
-	- prob of being risk level 1 (80%) vs risk level 2 (20%)
-	- EHI stage (only those recipient get infection)
-	- care status (only undiagnosed get infection)
-       	- age assortativity (power of age class difference) 
-  - intervenes in F matrix [ F(i,j) = incidence * w * prRecipMat(i,j), with w = beta_NH * beta_age * beta_care * beta_risk ]
-
-
-prStageRecipMat:
-  - Prob for EHI recipient to jump to next other CD4 stage
-  
 ###Source C functions
- 'Birth matrix' $F(t)$: Number of transmissions from donor in each of 120 compartments to recipient in each compartment over time
- 'Migration matrix' $G(t)$: Number of transition from each compartment to each compartment over time
+ C code defines:
+ \begin{itemize}
+  \item 'Birth matrix' $F(t)$: Number of transmissions from donor in each of 120 compartments to recipient in each compartment over time
+ \item 'Migration matrix' $G(t)$: Number of transition from each compartment to each compartment over time
+ \end{itemize}
+
+ `AGE_RECIP`, `CARE_RECIP` and `STAGEPROG_RECIP` are vectors of indices of compartments to which transition (migration) occurs
+ 
+- With the form $G_{i,i+1}(t) = rate I_i$
+- with migration from source compartment
+- with reduced progression for treated individuals. When treated, speed of progression through stages is reduced by treatment effectiveness $e$: $\gamma_i(1 - e)$
+  
 ```{r source C}
 ```
+
+
+### Calibrate scale of incidence curve and diagnosis rate
+Incidence and diagnosis rates are modeled as logistic functions of time and jointly calibrated to match the number of MSM living with diagnosed HIV in London in 2012 [@yin_hiv_2014]. 
+
+Notes:
+- incidence and diagnosis rate scaling factors are a priori. Now, there are fitted (doi:10.1371/journal.pone.0055312.g002 (Fig 2.A))
+- iterations set to 30 for speed
+
+```{r dock model}
+```
+
+Comparison of initial and calibrated values
+```{r check docking}
+print(exp(theta_start))
+print(theta_docked)
+##print(theta_default)
+##print(theta)
+```
+
+## Tree reconstruction
+
+Genealogical trees are simulated conditioning on the epidemic history, and trees are matched to the real UK metadata data pertaining to times of sampling and clinical stage of infection. 
+
+TODO: `model0-simulateBaseline0.R` to run the simulation and generate a tree
+
+## References

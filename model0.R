@@ -9,7 +9,7 @@
 ##- and testing source attribution methods
 
 ##---- libs ----
-require(phydynR) # replaces rcolgem
+require(phydynR)
 require(deSolve)
 require(Rcpp)
 
@@ -41,10 +41,10 @@ theta <- c( age_assort_factor = .5 # power of age difference
   , srcMigrationRate = 1/50/365 # per lineage rate of migration to source
   , srcGrowthRate = 1 / 3 / 365 # 
   , src0 = 1e3  # initial source size 
-  , inc_scale = 0.09401734 # based on docking (see below) # initial = .03
-  , max_diag_rate = 0.66227809 # based on docking (see below) # initial = 1/3 (time 2 diag of 3 yrs)
+  , inc_scale = .03 # based on docking (see below) # initial = .03 # 0.09401734
+  , max_diag_rate =  1/3 # based on docking (see below) # initial = 1/3 (time 2 diag of 3 yrs) # 0.66227809
   , diag_rate_85 = 1/10 
-  , accel_diag_rate = 0.03196171 # based on docking (see below ) # initial = 1/7 # accel of logistic function
+  , accel_diag_rate = 1/7 # based on docking (see below ) # initial = 1/7 # accel of logistic function # 0.03196171
   , treatmentEffectiveness = .95 # slows stage progression
   , pstarts
 	, age_rates
@@ -263,7 +263,7 @@ y0[ CARE_COORDS$care1 ] <- 1 / length( CARE_COORDS$care1 )
 y0[m] <- theta['src0'] # initial source size 
 
 
-##---- Docking ----
+##---- calibrating function ----
 #~ idea for hacking incidence and diagnosis rates(t)
 #~ phillips incidence estimate -> scale so cuminf has about right value 
 #~ make diagnosis rate linear from zero; tune so that 80pc diagnosed in present
@@ -309,37 +309,6 @@ tr.t <- function(t){
 
 ##---- source C ----
 sourceCpp( 'model0.cpp' ) # F_matrix and G_matrix fns
-
-
-## solve model 
-#~ F_matrix( double incidence
-#~   , NumericVector sizes
-#~   , NumericVector theta
-#~   , CharacterVector demes
-#~   , IntegerVector NH // length m indicators for each deme 
-#~   , IntegerVector AGE
-#~   , IntegerVector CARE
-#~   , IntegerVector RISK
-#~   , NumericVector nh_wtransm // associated weight for each category
-#~   , NumericVector age_wtransm
-#~   , NumericVector care_wtransm
-#~   , NumericVector risk_wtransm
-#~   , NumericMatrix prRecipMat // pstartstage & age mixing & prisklevel
-#~ )
-#~ G_matrix( NumericVector sizes
-#~   , NumericVector theta
-#~   , CharacterVector demes
-#~   , IntegerVector NH // length m indicators for each deme 
-#~   , IntegerVector AGE
-#~   , IntegerVector CARE
-#~   , IntegerVector RISK
-#~   , IntegerVector stageprog_recip // destination for migration
-#~   , IntegerVector age_recip
-#~   , IntegerVector care_recip
-#~   , NumericVector stageprog_rates //rates for each deme
-#~   , NumericVector age_rates
-#~   , NumericVector care_rates // note these depend on time
-#~ )
 
 dydt <- function(t,y, parms, ... ){
 	y <- pmax(y, 0 )
@@ -458,4 +427,27 @@ dydt <- function(t,y, parms, ... ){
 	list( .t, .F, .G, .Y )
 }
 
+##---- dock model ----
+if (T)
+{
+  #~ PHE: 15552 diagnosed msm in london in 2012
+  propDiagnosed2012 <- 4/5
+  I2012 <- 15552  / propDiagnosed2012 # assuming 80pc diagnosed
+  #objfun based on both the above stats: 
+  objfun <- function( lntheta0 )
+  {
+    theta[ names(lntheta0) ] <<- exp(lntheta0) # using globals..
+    o <- ode(y=y0, times=times_day, func=dydt, parms=list(), method = 'euler')
+    ifin <- sum( o[nrow(o), 2:(ncol(o)-1) ] )
+    idiagnosed <- sum( o[nrow(o), 1 + c( CARE_COORDS$care2, CARE_COORDS$care3) ] )
+    print(paste( ifin, idiagnosed ))
+    print( theta[fit_names ] )
+    ((ifin - I2012) / I2012)^2 + (idiagnosed/ifin - propDiagnosed2012)^2
+  }
+  fit_names <- c('inc_scale', 'max_diag_rate', 'accel_diag_rate')
+  theta_start <- log(theta[fit_names]) # default values
+  o <- optim( theta_start, objfun , control = list(trace=6, maxit=30) ) # 300
+  theta_docked <- exp(o$par)
+  print((o))
+}
 
